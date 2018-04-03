@@ -1,5 +1,19 @@
 import numpy as np
 
+def wiener_deconvolution(signal, kernel, snr):
+    "lambd is the SNR"
+    from scipy import fft,ifft
+    kernel = np.hstack((kernel, np.zeros(len(signal) - len(kernel)))) # zero pad the kernel to same length
+    H = fft(kernel)
+    deconvolved = np.real(ifft(fft(signal)*np.conj(H)/(H*np.conj(H) + snr**2)))
+    return deconvolved
+
+def make_single_kernel(times,tauon1,tauoff1):
+    kx = np.copy(times)
+    kon1 = lambda x:np.exp(((-1*tauon1)/(x)))
+    koff1 = lambda x:np.exp((-1*x)/tauoff1)
+    k1 = (kon1(kx)*koff1(kx))
+    return k1/np.max(k1)
 
 def forward_optimize(resampled_ca,
                      resample_times,
