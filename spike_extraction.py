@@ -156,4 +156,7 @@ for key,value in spikes_right.items():
                                'reconstruction':value[idx][2]}
     
 fly.save_hdf5(np.array(potential_impulse_idxs),'potential_impulse_idxs',overwrite = True)
-fly.save_pickle(best_spikes,'best_spikes.cpkl')
+
+for key,value in best_spikes.items():
+    fly.save_hdf5(value,'spikes_%s_%s'%key)
+#fly.save_pickle(best_spikes,'best_spikes.cpkl')
