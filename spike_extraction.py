@@ -3,8 +3,9 @@ import numpy as np
 import scipy
 from thllib import util
 import scipy.signal
+import sys
 
-FLYNUM = 1393
+FLYNUM = int(sys.argv[1])# tested with 1393
 RESAMPLE_RATE = 2000 #hz
 TAU_ON = 0.01595905
 TAU_OFF = 23594343
@@ -100,19 +101,20 @@ print('wiener_deconvolution')
 ################################
 decon_left = {}
 for key,value in resampled_left.items():
-    print key
+    #print key
     decon = wiener_deconvolution(value,kernel[:5000]*KERNEL_GAIN,SNR)
     decon_left[key] = decon
 
 decon_right = {}
 for key,value in resampled_right.items():
+    #print key
     decon = wiener_deconvolution(value,kernel[:5000]*KERNEL_GAIN,SNR)
     decon_right[key] = decon
 
 ################################
 # Decide if a spike was fired  #
 ################################
-
+print('setting spikes')
 spikes_left = {}
 for key,value in decon_left.items():
     #print key
@@ -142,7 +144,7 @@ for key,value in decon_right.items():
 ################################
 # Pick the best threshold      #
 ################################
-
+print('picking thresh')
 best_spikes = {}
 for key,value in spikes_left.items():
     idx = np.argmax([item[0] for item in value])
@@ -154,9 +156,13 @@ for key,value in spikes_right.items():
     best_spikes['right',key] = {'R':value[idx][0],
                                'spikes':value[idx][1],
                                'reconstruction':value[idx][2]}
-    
+
+print('saving data')
 fly.save_hdf5(np.array(potential_impulse_idxs),'potential_impulse_idxs',overwrite = True)
 
-for key,value in best_spikes.items():
-    fly.save_hdf5(value,'spikes_%s_%s'%key)
-#fly.save_pickle(best_spikes,'best_spikes.cpkl')
+for key1,value in best_spikes.items():
+    for key2,data in value.items():
+        if key2 == 'R':
+            fly.save_txt(str(data),'spikes_%s_%s_%s'%(key1[0],key1[1],key2))
+        else:
+            fly.save_hdf5(data,'spikes_%s_%s_%s'%(key1[0],key1[1],key2),overwrite = True)
