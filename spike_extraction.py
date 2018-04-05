@@ -158,15 +158,20 @@ for key,value in spikes_right.items():
                                'reconstruction':value[idx][2]}
 
 print('downsampling and saving data')
+potential_impulse_times = resampled_t[potential_impulse_idxs]
 for key in best_spikes:    
     spike_sig = best_spikes[key]['spikes']
-    state_sig = np.zeros_like(fly.time)
+    recon_sig = best_spikes[key]['reconstruction']
+    state_save = np.zeros_like(fly.time)
+    recon_save = np.zeros_like(fly.time)
     for i,timetup in enumerate(zip(fly.time[:-1],fly.time[1:])):
         t1,t2 = timetup
         idx1 = np.searchsorted(potential_impulse_times,t1)
         idx2 = np.searchsorted(potential_impulse_times,t2)
-        state_sig[i] = np.sum(spike_sig[potential_impulse_idxs[idx1:idx2]]/(idx2-idx1))>0.5
-    fly.save_hdf5(state_sig,'spikestate_%s_%s'%key, overwrite = True)
+        state_save[i] = np.sum(spike_sig[potential_impulse_idxs[idx1:idx2]]/(idx2-idx1))>0.5
+        recon_save[i] = np.mean(recon_sig[potential_impulse_idxs[idx1]:potential_impulse_idxs[idx2]])
+    fly.save_hdf5(state_save,'spikestate_%s_%s'%key, overwrite = True)
+    fly.save_hdf5(recon_save,'reconstruct_%s_%s'%key, overwrite = True)
     
 #fly.save_hdf5(np.array(potential_impulse_idxs),'potential_impulse_idxs',overwrite = True)
 
