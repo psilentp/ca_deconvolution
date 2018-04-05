@@ -8,7 +8,7 @@ import sys
 FLYNUM = int(sys.argv[1])# tested with 1393
 RESAMPLE_RATE = 2000 #hz
 TAU_ON = 0.01595905
-TAU_OFF = 23594343
+TAU_OFF = 0.23594343
 KERNEL_GAIN = 0.4
 SNR = 1.0
 DEFALULT_ISI = 0.005 #s
@@ -159,6 +159,10 @@ for key,value in spikes_right.items():
 
 print('downsampling and saving data')
 potential_impulse_times = resampled_t[potential_impulse_idxs]
+
+state_dict = {}
+reconstruct_dict = {}
+
 for key in best_spikes:    
     spike_sig = best_spikes[key]['spikes']
     recon_sig = best_spikes[key]['reconstruction']
@@ -169,9 +173,14 @@ for key in best_spikes:
         idx1 = np.searchsorted(potential_impulse_times,t1)
         idx2 = np.searchsorted(potential_impulse_times,t2)
         state_save[i] = np.sum(spike_sig[potential_impulse_idxs[idx1:idx2]]/(idx2-idx1))>0.5
-        recon_save[i] = np.mean(recon_sig[potential_impulse_idxs[idx1]:potential_impulse_idxs[idx2]])
-    fly.save_hdf5(state_save,'spikestate_%s_%s'%key, overwrite = True)
-    fly.save_hdf5(recon_save,'reconstruct_%s_%s'%key, overwrite = True)
+        r_idx1 = np.searchsorted(resampled_t,t1)
+        r_idx2 = np.searchsorted(resampled_t,t2)
+        recon_save[i] = np.mean(recon_sig[r_idx1:r_idx2])
+    state_dict[key] = state_save
+    reconstruct_dict[key] = recon_save
+
+fly.save_pickle(state_dict,'spikestates')
+fly.save_pickle(reconstruct_dict,'ca_reconstructions')
     
 #fly.save_hdf5(np.array(potential_impulse_idxs),'potential_impulse_idxs',overwrite = True)
 
