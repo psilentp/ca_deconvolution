@@ -157,12 +157,22 @@ for key,value in spikes_right.items():
                                'spikes':value[idx][1],
                                'reconstruction':value[idx][2]}
 
-print('saving data')
-fly.save_hdf5(np.array(potential_impulse_idxs),'potential_impulse_idxs',overwrite = True)
+print('downsampling and saving data')
+for key in best_spikes:    
+    spike_sig = best_spikes[key]['spikes']
+    state_sig = np.zeros_like(fly.time)
+    for i,timetup in enumerate(zip(fly.time[:-1],fly.time[1:])):
+        t1,t2 = timetup
+        idx1 = np.searchsorted(potential_impulse_times,t1)
+        idx2 = np.searchsorted(potential_impulse_times,t2)
+        state_sig[i] = np.sum(spike_sig[potential_impulse_idxs[idx1:idx2]]/(idx2-idx1))>0.5
+    fly.save_hdf5(state_sig,'spikestate_%s_%s'%key, overwrite = True)
+    
+#fly.save_hdf5(np.array(potential_impulse_idxs),'potential_impulse_idxs',overwrite = True)
 
-for key1,value in best_spikes.items():
-    for key2,data in value.items():
-        if key2 == 'R':
-            fly.save_txt(str(data),'spikes_%s_%s_%s'%(key1[0],key1[1],key2))
-        else:
-            fly.save_hdf5(data,'spikes_%s_%s_%s'%(key1[0],key1[1],key2),overwrite = True)
+#for key1,value in best_spikes.items():
+#    for key2,data in value.items():
+#        if key2 == 'R':
+#            fly.save_txt(str(data),'spikes_%s_%s_%s'%(key1[0],key1[1],key2))
+#        else:
+#            fly.save_hdf5(data,'spikes_%s_%s_%s'%(key1[0],key1[1],key2),overwrite = True)
